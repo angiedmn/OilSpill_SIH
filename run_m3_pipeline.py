@@ -9,12 +9,10 @@ from modules.drift.pipeline import DriftPipeline
 METADATA_FILEPATH = os.path.join("outputs", "geospatial", "spill_metadata.json")
 OUTPUT_RESULT_FILEPATH = os.path.join("outputs", "drift", "drift_simulation_result.json")
 
+MAX_SLICKS_TO_SIMULATE = 100 
+MIN_AREA_THRESHOLD = 0.0005  # Filters out noise artifacts while keeping real slick geometry
 
-MAX_SLICKS_TO_SIMULATE = 10 
-MIN_AREA_THRESHOLD = 0.0001 
-
-
-def filter_and_rank_slicks(slicks, max_count=10):
+def filter_and_rank_slicks(slicks, max_count=MAX_SLICKS_TO_SIMULATE):
     valid_slicks = []
     
     for s in slicks:
@@ -26,13 +24,12 @@ def filter_and_rank_slicks(slicks, max_count=10):
         except Exception:
             continue
 
-   
+    # Rank by footprint area (largest spills first)
     valid_slicks.sort(key=lambda x: x[0], reverse=True)
     selected = [item[1] for item in valid_slicks[:max_count]]
     
-    print(f"[FILTER] Total slicks: {len(slicks)} -> Filtered down to top {len(selected)} largest features.")
+    print(f"[FILTER] Total slicks: {len(slicks)} -> Selected top {len(selected)} major features.")
     return selected
-
 
 def _compute_dynamic_bbox(slicks, buffer=0.5):
     all_lons, all_lats = [], []
@@ -61,7 +58,7 @@ def fetch_cmems_data(obs_time_str, bbox, hindcast_hours=12, forecast_hours=11):
     currents_file = "cmems_currents.nc"
     winds_file = "cmems_winds.nc"
 
-    print(f"[CMEMS] Downloading ocean/wind data: {start_time} to {end_time}...")
+    print(f"[CMEMS] Downloading ocean/wind data for full bounding envelope: {start_time} to {end_time}...")
 
     copernicusmarine.subset(
         dataset_id="cmems_mod_glo_phy_anfc_merged-uv_PT1H-i",
@@ -97,8 +94,8 @@ if __name__ == "__main__":
 
     all_slicks = spill_data if isinstance(spill_data, list) else [spill_data]
     
-    # Select only the top priority slicks
-    target_slicks = filter_and_rank_slicks(all_slicks, max_count=MAX_SLICKS_TO_SIMULATE)
+    # Select ALL valid slicks across the entire input dataset
+    target_slicks = filter_and_rank_slicks(all_slicks)
     
     if not target_slicks:
         print("[WARNING] No valid slicks met the filter criteria. Exiting.")
@@ -121,7 +118,7 @@ if __name__ == "__main__":
     pipeline = DriftPipeline(metocean_sources=[currents_nc, winds_nc])
     all_results = []
 
-    print(f"\nProcessing {len(target_slicks)} selected slicks sequentially...")
+    print(f"\nProcessing all {len(target_slicks)} slicks sequentially...")
 
     for idx, slick in enumerate(target_slicks, start=1):
         try:
@@ -147,12 +144,13 @@ if __name__ == "__main__":
             print(f"[{idx}/{len(target_slicks)}] Done: {m3_result.get('slick_id')}")
 
         except KeyboardInterrupt:
-            print("\n[CANCELLED] Stopped by user (Ctrl+C). Saving partial results...")
+            print("\n[CANCELLED] Stopped by user (Ctrl+C). Saving partial batch results...")
             break
         except Exception as e:
-            print(f"[{idx}/{len(target_slicks)}] Skipped due to error: {str(e)}")
+            print(f"[{idx}/{len(target_slicks)}] Skipped feature due to error: {str(e)}")
 
+    # Compact JSON output format to prevent ballooning file size
     with open(OUTPUT_RESULT_FILEPATH, "w") as f:
-        json.dump(all_results, f, indent=4)
+        json.dump(all_results, f, separators=(',', ':'))
 
-    print(f"\n[SUCCESS] Saved {len(all_results)} simulations to: {OUTPUT_RESULT_FILEPATH}")
+    print(f"\n[SUCCESS] Successfully processed and saved {len(all_results)} simulations to: {OUTPUT_RESULT_FILEPATH}")
