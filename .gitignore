@@ -1,3 +1,68 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+env/
+.venv/
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project outputs (regenerate-able, don't clutter repo)
+outputs/geospatial/*.png
+*.tif
+
+# Env/secrets
+.env
+# Python
+__pycache__/
+*.pyc
+venv/
+env/
+.venv/
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project outputs (regenerate-able, don't clutter repo)
+outputs/geospatial/*.png
+*.tif
+
+# Env/secrets
+.env
+
+
+*.nc
+# Model artifacts & checkpoints
+*.pth
+*.pt
+*.onnx
+models/*.pth
+
+# Large intermediate inference data
+outputs/
+!outputs/spill/all_detections.json
+data
+*.mask.png
+
+# Secrets & local environments
+.env
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+*.ipynb
+!AIS/notebooks/01_ais_cleaning.ipynb
+!AIS/data/processed/01_ais_cleaning.ipynb
 # AIS datasets
 data/raw/*
 data/processed/*.csv
