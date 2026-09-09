@@ -46,7 +46,10 @@ features = (
         mean_sog=("sog", "mean"),
         mean_cog=("cog", "mean"),
         ais_gap_count=("ais_gap", "sum"),
-        max_gap_minutes=("time_diff_seconds", lambda x: x.max() / 60),
+        max_gap_minutes=(
+            "time_diff_seconds",
+            lambda x: 0 if x.dropna().empty else x.max() / 60
+        ),
         stopped_observations=("stopped", "sum")
     )
     .reset_index()

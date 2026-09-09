@@ -1,0 +1,1 @@
+mmsi,base_date_time,longitude,latitude,sog,cog,heading,vessel_name,imo,call_sign,vessel_type,prev_lat,prev_lon,prev_time,time_diff_seconds,distance_m,implied_speed_knots,movement_anomaly,zero_time_gap,ais_gap,valid_movement
