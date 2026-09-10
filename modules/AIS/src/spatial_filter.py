@@ -4,8 +4,8 @@ import pandas as pd
 
 BASE = Path(__file__).resolve().parent.parent
 
-AIS_FILE = BASE / "data" / "processed" / "ais_clean.csv"
-M3_FILE = BASE.parent / "outputs" / "drift" / "drift_simulation_result.json"
+AIS_FILE = BASE / "data" / "raw" / "synthetic_ais_india_oilspill.csv"
+M3_FILE = BASE.parent.parent / "outputs" / "drift" / "drift_simulation_result.json"
 OUTPUT_DIR = BASE / "data" / "processed"
 
 if not AIS_FILE.exists():
