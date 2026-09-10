@@ -3,8 +3,8 @@ import pandas as pd
 
 BASE = Path(__file__).resolve().parent.parent
 
-INPUT = BASE / "data" / "processed" / "ais_clean.csv"
-OUTPUT = BASE / "data" / "processed" / "ais_gaps.csv"
+INPUT = BASE / "data" / "processed" / "candidate_tracks_sorted.csv"
+OUTPUT = BASE / "data" / "processed" / "candidate_gaps.csv"
 
 if not INPUT.exists():
     raise FileNotFoundError(f"File not found: {INPUT}")
@@ -18,11 +18,13 @@ df["base_date_time"] = pd.to_datetime(
 )
 
 df = df.sort_values(
-    ["mmsi", "base_date_time"]
+    ["slick_id", "mmsi", "base_date_time"]
 ).reset_index(drop=True)
 
 df["time_diff_seconds"] = (
-    df.groupby("mmsi")["base_date_time"]
+    df.groupby(
+        ["slick_id", "mmsi"]
+    )["base_date_time"]
     .diff()
     .dt.total_seconds()
 )
@@ -33,6 +35,7 @@ df["gap_minutes"] = df["time_diff_seconds"] / 60
 gaps = df[df["ais_gap"]].copy()
 
 columns = [
+    "slick_id",
     "mmsi",
     "base_date_time",
     "time_diff_seconds",
@@ -51,7 +54,7 @@ gaps[columns].to_csv(
     index=False
 )
 
-print("Original AIS gap analysis complete.")
-print(f"Total gaps >10 minutes: {len(gaps):,}")
-print(f"Vessels with gaps: {gaps['mmsi'].nunique():,}")
+print("Candidate AIS gap analysis complete.")
+print(f"Candidate gaps >10 minutes: {len(gaps):,}")
+print(f"Candidate vessels with gaps: {gaps['mmsi'].nunique():,}")
 print(f"Output: {OUTPUT}")
