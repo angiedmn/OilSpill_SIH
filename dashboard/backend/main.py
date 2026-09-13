@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 from typing import Any
+import math
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -182,6 +183,358 @@ def get_case(slick_id: str):
         }
     )
 
+# ---------------------------------------------------------------------------
+# Forecast spread / marine sensitivity
+# ---------------------------------------------------------------------------
+
+# Prototype sensitive marine areas.
+#
+# IMPORTANT:
+# These are placeholder/demo zones for the dashboard prototype.
+# Replace them later with actual protected areas / mangrove zones /
+# coral reef zones / fisheries / coastal ecological datasets.
+#
+# Format:
+# {
+#     "id": "...",
+#     "name": "...",
+#     "type": "...",
+#     "geometry": GeoJSON Polygon
+# }
+#
+SENSITIVE_MARINE_AREAS = [
+    {
+        "id": "demo_sensitive_01",
+        "name": "Sensitive Marine Habitat — Demo Zone",
+        "type": "Marine ecological zone",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [[
+                [72.72, 19.02],
+                [72.78, 19.02],
+                [72.78, 19.08],
+                [72.72, 19.08],
+                [72.72, 19.02],
+            ]]
+        },
+    },
+]
+
+
+def _destination_point(lat: float, lon: float, bearing_deg: float, distance_km: float):
+    """
+    Approximate destination point on Earth.
+
+    Used only to construct a visual uncertainty/spread area around
+    forecast centroid points.
+    """
+    earth_radius_km = 6371.0
+
+    bearing = math.radians(bearing_deg)
+    lat1 = math.radians(lat)
+    lon1 = math.radians(lon)
+
+    angular_distance = distance_km / earth_radius_km
+
+    lat2 = math.asin(
+        math.sin(lat1) * math.cos(angular_distance)
+        + math.cos(lat1)
+        * math.sin(angular_distance)
+        * math.cos(bearing)
+    )
+
+    lon2 = lon1 + math.atan2(
+        math.sin(bearing)
+        * math.sin(angular_distance)
+        * math.cos(lat1),
+        math.cos(angular_distance)
+        - math.sin(lat1) * math.sin(lat2),
+    )
+
+    return math.degrees(lat2), math.degrees(lon2)
+
+
+def _spread_circle(lat: float, lon: float, radius_km: float):
+    """
+    Create a simple GeoJSON polygon approximating a circular spill
+    uncertainty/spread area.
+    """
+    coordinates = []
+
+    # 36-sided polygon is visually smooth enough for the dashboard.
+    for bearing in range(0, 360, 10):
+        p_lat, p_lon = _destination_point(
+            lat,
+            lon,
+            bearing,
+            radius_km,
+        )
+        coordinates.append([p_lon, p_lat])
+
+    coordinates.append(coordinates[0])
+
+    return {
+        "type": "Polygon",
+        "coordinates": [coordinates],
+    }
+
+
+def _haversine_km(lat1, lon1, lat2, lon2):
+    R = 6371.0
+
+    p1 = math.radians(lat1)
+    p2 = math.radians(lat2)
+
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(p1)
+        * math.cos(p2)
+        * math.sin(dlon / 2) ** 2
+    )
+
+    return 2 * R * math.asin(math.sqrt(a))
+
+
+def _extract_forecast_points(simulation):
+    """
+    Handles the existing drift output structure:
+
+        forecast_trajectories:
+            centroid_path:
+                lats: [...]
+                lons: [...]
+                times: [...]   # if available
+
+    Returns a clean list of forecast points.
+    """
+
+    path = (
+        simulation
+        .get("forecast_trajectories", {})
+        .get("centroid_path", {})
+    )
+
+    lats = path.get("lats", [])
+    lons = path.get("lons", [])
+    times = path.get("times", [])
+
+    points = []
+
+    for i, (lat, lon) in enumerate(zip(lats, lons)):
+        if lat is None or lon is None:
+            continue
+
+        point = {
+            "lat": lat,
+            "lon": lon,
+        }
+
+        if i < len(times):
+            point["time"] = times[i]
+
+        points.append(point)
+
+    return points
+
+
+@app.get("/api/case/{slick_id}/forecast-risk")
+def get_forecast_risk(slick_id: str):
+    """
+    Forecast spill spread and marine sensitivity view.
+
+    This endpoint is completely separate from the existing case endpoint.
+    """
+
+    # ---------------------------------------------------------
+    # 1. Find drift simulation for this spill
+    # ---------------------------------------------------------
+
+    drift_all = _as_list(_load(DRIFT_FILE))
+
+    drift_entry = next(
+        (
+            d
+            for d in drift_all
+            if d.get("simulation", {}).get("slick_id") == slick_id
+        ),
+        None,
+    )
+
+    if not drift_entry:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No drift simulation found for slick_id '{slick_id}'",
+        )
+
+    simulation = drift_entry.get("simulation", {})
+
+    # ---------------------------------------------------------
+    # 2. Current spill geometry
+    # ---------------------------------------------------------
+
+    geospatial_all = _as_list(_load(GEOSPATIAL_FILE))
+
+    spill_entry = next(
+        (
+            g
+            for g in geospatial_all
+            if g.get("image_id") == slick_id
+        ),
+        None,
+    )
+
+    # ---------------------------------------------------------
+    # 3. Forecast trajectory
+    # ---------------------------------------------------------
+
+    forecast_points = _extract_forecast_points(simulation)
+
+    if not forecast_points:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No forecast trajectory available for '{slick_id}'",
+        )
+
+    # ---------------------------------------------------------
+    # 4. Generate expanding spread around forecast trajectory
+    # ---------------------------------------------------------
+
+    spread_zones = []
+
+    for i, point in enumerate(forecast_points):
+
+        # Increasing uncertainty/spread with forecast time.
+        #
+        # This is a PROTOTYPE visualization model, not a physical
+        # oil-spill dispersion model.
+        radius_km = min(
+            8.0,
+            1.0 + (i * 0.35)
+        )
+
+        spread_zones.append(
+            {
+                "index": i,
+                "time": point.get("time"),
+                "center": point,
+                "radius_km": round(radius_km, 2),
+                "geometry": _spread_circle(
+                    point["lat"],
+                    point["lon"],
+                    radius_km,
+                ),
+            }
+        )
+
+    # ---------------------------------------------------------
+    # 5. Marine sensitivity check
+    # ---------------------------------------------------------
+
+    risk_hits = []
+
+    for area in SENSITIVE_MARINE_AREAS:
+
+        # Prototype proximity calculation.
+        #
+        # For now we calculate distance from forecast centroid
+        # points to the first coordinate of the sensitive polygon.
+        #
+        # Replace this later with actual polygon intersection/
+        # nearest-boundary geometry using Shapely/geopandas.
+
+        polygon = area["geometry"]["coordinates"][0]
+
+        min_distance = float("inf")
+        closest_forecast_point = None
+
+        for forecast_point in forecast_points:
+
+            for lon, lat in polygon:
+
+                distance = _haversine_km(
+                    forecast_point["lat"],
+                    forecast_point["lon"],
+                    lat,
+                    lon,
+                )
+
+                if distance < min_distance:
+                    min_distance = distance
+                    closest_forecast_point = forecast_point
+
+        # Risk thresholds for the prototype.
+        if min_distance <= 5:
+            risk_level = "HIGH"
+        elif min_distance <= 15:
+            risk_level = "MODERATE"
+        else:
+            risk_level = "LOW"
+
+        risk_hits.append(
+            {
+                "area_id": area["id"],
+                "name": area["name"],
+                "type": area["type"],
+                "risk_level": risk_level,
+                "minimum_distance_km": round(min_distance, 2),
+                "closest_forecast_point": closest_forecast_point,
+                "geometry": area["geometry"],
+            }
+        )
+
+    overall_risk = "LOW"
+
+    if any(r["risk_level"] == "HIGH" for r in risk_hits):
+        overall_risk = "HIGH"
+    elif any(r["risk_level"] == "MODERATE" for r in risk_hits):
+        overall_risk = "MODERATE"
+
+    return _clean_nan(
+        {
+            "slick_id": slick_id,
+
+            "observation_time": simulation.get(
+                "observation_time"
+            ),
+
+            "estimated_spill_time": simulation.get(
+                "origin_estimation", {}
+            ).get("estimated_spill_time_utc"),
+
+            "current_spill": {
+                "geometry": (
+                    spill_entry or {}
+                ).get("geometry"),
+
+                "area_km2": (
+                    spill_entry or {}
+                ).get("area_km2"),
+
+                "confidence": (
+                    spill_entry or {}
+                ).get("confidence"),
+            },
+
+            "forecast": {
+                "points": forecast_points,
+                "spread_zones": spread_zones,
+            },
+
+            "marine_risk": {
+                "overall": overall_risk,
+                "sensitive_areas": risk_hits,
+            },
+
+            "prototype_note": (
+                "Forecast spread is visualized using expanding "
+                "uncertainty buffers around the drift centroid path. "
+                "It is not a physical oil-dispersion model."
+            ),
+        }
+    )
 
 if __name__ == "__main__":
     import uvicorn
