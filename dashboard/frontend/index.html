@@ -274,6 +274,283 @@ select#caseSelect {
 }
 
 .leaflet-popup-tip { background:var(--panel-raised); }
+
+/* =========================================================
+   Forecast spread / marine risk view
+   ========================================================= */
+
+.forecast-button {
+  width: 100%;
+  padding: 10px 12px;
+
+  background: #16273b;
+  color: var(--cyan);
+
+  border: 1px solid var(--line);
+  border-radius: 5px;
+
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.forecast-button:hover {
+  border-color: var(--cyan);
+  background: #1c3045;
+}
+
+.forecast-modal {
+  position: fixed;
+  inset: 0;
+
+  z-index: 5000;
+
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(5, 10, 16, 0.82);
+  backdrop-filter: blur(3px);
+}
+
+.forecast-modal.open {
+  display: flex;
+}
+
+.forecast-panel {
+  width: min(1100px, 94vw);
+  height: min(760px, 90vh);
+
+  background: var(--panel);
+
+  border: 1px solid var(--line);
+  border-radius: 8px;
+
+  overflow: hidden;
+
+  display: grid;
+  grid-template-rows: 62px 52px 1fr 42px auto;
+}
+
+.forecast-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 0 18px;
+
+  border-bottom: 1px solid var(--line);
+}
+
+.forecast-title {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.forecast-subtitle {
+  margin-top: 4px;
+
+  color: var(--text-dim);
+
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.forecast-close {
+  width: 32px;
+  height: 32px;
+
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+
+  color: var(--text-dim);
+
+  font-size: 22px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.forecast-close:hover {
+  color: var(--text);
+  border-color: var(--cyan);
+}
+
+.forecast-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 0 18px;
+
+  background: var(--panel-raised);
+  border-bottom: 1px solid var(--line);
+}
+
+.forecast-toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  color: var(--text);
+
+  font-size: 11px;
+  font-family: var(--mono);
+
+  cursor: pointer;
+}
+
+.forecast-toggle input {
+  display: none;
+}
+
+.toggle-slider {
+  width: 30px;
+  height: 16px;
+
+  background: #26394d;
+
+  border-radius: 10px;
+
+  position: relative;
+}
+
+.toggle-slider::after {
+  content: "";
+
+  position: absolute;
+
+  width: 12px;
+  height: 12px;
+
+  left: 2px;
+  top: 2px;
+
+  border-radius: 50%;
+
+  background: var(--text-dim);
+
+  transition: 0.15s;
+}
+
+.forecast-toggle input:checked + .toggle-slider {
+  background: rgba(79, 209, 197, 0.35);
+}
+
+.forecast-toggle input:checked + .toggle-slider::after {
+  left: 16px;
+  background: var(--cyan);
+}
+
+.risk-badge {
+  padding: 5px 9px;
+
+  border-radius: 4px;
+
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+
+  border: 1px solid var(--line);
+}
+
+.risk-badge.low {
+  color: var(--cyan);
+  border-color: rgba(79, 209, 197, 0.4);
+}
+
+.risk-badge.moderate {
+  color: var(--amber);
+  border-color: rgba(224, 164, 88, 0.5);
+}
+
+.risk-badge.high {
+  color: var(--red);
+  border-color: rgba(224, 100, 90, 0.6);
+}
+
+#forecastMap {
+  width: 100%;
+  height: 100%;
+  background: #0b1420;
+}
+
+.forecast-legend {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  padding: 0 18px;
+
+  border-top: 1px solid var(--line);
+
+  color: var(--text-dim);
+
+  font-size: 10px;
+  font-family: var(--mono);
+}
+
+.forecast-legend > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+
+  border-radius: 50%;
+
+  display: inline-block;
+}
+
+.legend-dot.current {
+  background: var(--red);
+}
+
+.legend-dot.forecast {
+  background: var(--cyan);
+}
+
+.legend-dot.sensitive {
+  background: var(--amber);
+}
+
+.forecast-risk-info {
+  padding: 12px 18px;
+
+  border-top: 1px solid var(--line);
+
+  background: #0d1927;
+
+  font-family: var(--mono);
+  font-size: 10.5px;
+
+  color: var(--text-dim);
+}
+
+.forecast-risk-info strong {
+  color: var(--text);
+}
+
+.forecast-risk-alert {
+  color: var(--red);
+}
+
+.forecast-risk-warning {
+  color: var(--amber);
+}
+
+.forecast-risk-safe {
+  color: var(--cyan);
+}
 </style>
 </head>
 
@@ -835,7 +1112,11 @@ function renderSide() {
       </div>
 
     </div>
-
+    <div class="block">
+      <button class="forecast-button" onclick="openForecastView()">
+        FORECAST SPREAD & MARINE RISK
+      </button>
+    </div>
     <div
       class="block"
       style="flex:1;"
@@ -1080,10 +1361,584 @@ function setMode(mode) {
 }
 
 /* END mode switch */
+// =========================================================
+// FORECAST SPREAD / MARINE RISK
+// =========================================================
 
+let forecastMap = null;
+let forecastLayerGroup = null;
+let forecastSpreadLayer = null;
+
+
+async function openForecastView() {
+
+  const modal = document.getElementById("forecastModal");
+
+  modal.classList.add("open");
+
+  await loadForecastRisk();
+
+  // Leaflet needs a size recalculation after being placed
+  // inside a previously hidden modal.
+  setTimeout(() => {
+    if (forecastMap) {
+      forecastMap.invalidateSize();
+    }
+  }, 100);
+}
+
+
+function closeForecastView() {
+
+  document
+    .getElementById("forecastModal")
+    .classList.remove("open");
+}
+
+
+async function loadForecastRisk() {
+
+  if (!currentCase) return;
+
+  const subtitle =
+    document.getElementById("forecastSubtitle");
+
+  const riskBadge =
+    document.getElementById("forecastRiskBadge");
+
+  const riskInfo =
+    document.getElementById("forecastRiskInfo");
+
+  subtitle.textContent =
+    `${currentCase.slick_id} — loading forecast trajectory`;
+
+  riskBadge.className = "risk-badge";
+  riskBadge.textContent = "CALCULATING";
+
+  riskInfo.innerHTML =
+    "Loading forecast and marine sensitivity analysis...";
+
+  try {
+
+    const res = await fetch(
+      `${API}/api/case/${currentCase.slick_id}/forecast-risk`
+    );
+
+    if (!res.ok) {
+
+      const error = await res.json();
+
+      throw new Error(
+        error.detail || "Forecast data unavailable"
+      );
+    }
+
+    const data = await res.json();
+
+    renderForecastMap(data);
+    renderForecastRisk(data);
+
+  } catch (err) {
+
+    console.error(
+      "FORECAST RISK ERROR:",
+      err
+    );
+
+    subtitle.textContent =
+      "Forecast unavailable";
+
+    riskBadge.textContent =
+      "ERROR";
+
+    riskInfo.innerHTML = `
+      <span class="forecast-risk-alert">
+        Unable to load forecast data:
+        ${err.message}
+      </span>
+    `;
+  }
+}
+
+
+function renderForecastMap(data) {
+
+  if (!forecastMap) {
+
+    forecastMap = L.map(
+      "forecastMap",
+      {
+        zoomControl: true
+      }
+    ).setView(
+      [19.0, 72.6],
+      10
+    );
+
+    L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+      {
+        attribution: "Tiles &copy; Esri",
+        maxZoom: 16
+      }
+    ).addTo(forecastMap);
+
+    forecastLayerGroup =
+      L.layerGroup().addTo(forecastMap);
+  }
+
+  forecastLayerGroup.clearLayers();
+
+  const bounds = [];
+
+  // ---------------------------------------------------------
+  // CURRENT SPILL — RED
+  // ---------------------------------------------------------
+
+  if (data.current_spill.geometry) {
+
+    const currentSpill =
+      L.geoJSON(
+        data.current_spill.geometry,
+        {
+          style: {
+            color: "#e0645a",
+            weight: 2,
+            fillColor: "#e0645a",
+            fillOpacity: 0.42
+          }
+        }
+      )
+      .bindPopup(
+        `<strong>Current spill</strong><br>` +
+        `Area: ${data.current_spill.area_km2 ?? "—"} km²`
+      )
+      .addTo(forecastLayerGroup);
+
+    currentSpill.eachLayer(
+      layer => {
+
+        if (layer.getBounds) {
+          bounds.push(
+            layer.getBounds()
+          );
+        }
+
+      }
+    );
+  }
+
+
+  // ---------------------------------------------------------
+  // FORECAST CENTROID PATH
+  // ---------------------------------------------------------
+
+  const forecastPoints =
+    data.forecast?.points || [];
+
+  if (forecastPoints.length) {
+
+    const path =
+      forecastPoints.map(
+        p => [p.lat, p.lon]
+      );
+
+    L.polyline(
+      path,
+      {
+        color: "#4fd1c5",
+        weight: 2,
+        dashArray: "5 5",
+        opacity: 0.8
+      }
+    )
+    .bindPopup(
+      "Forecast centroid trajectory"
+    )
+    .addTo(forecastLayerGroup);
+
+    bounds.push(
+      L.latLngBounds(path)
+    );
+
+
+    // -------------------------------------------------------
+    // FORECAST POINTS
+    // -------------------------------------------------------
+
+    forecastPoints.forEach(
+      (point, index) => {
+
+        L.circleMarker(
+          [point.lat, point.lon],
+          {
+            radius: 3,
+            color: "#4fd1c5",
+            fillColor: "#4fd1c5",
+            fillOpacity: 0.8,
+            weight: 1
+          }
+        )
+        .bindPopup(
+          `<strong>Forecast point ${index + 1}</strong><br>` +
+          `${point.time || ""}`
+        )
+        .addTo(forecastLayerGroup);
+
+      }
+    );
+  }
+
+
+  // ---------------------------------------------------------
+  // PREDICTIVE SPREAD — GREEN
+  // ---------------------------------------------------------
+
+  forecastSpreadLayer =
+    L.layerGroup().addTo(forecastLayerGroup);
+
+  drawForecastSpread(
+    data.forecast?.spread_zones || []
+  );
+
+
+  // ---------------------------------------------------------
+  // SENSITIVE MARINE AREAS
+  // ---------------------------------------------------------
+
+  const sensitiveAreas =
+    data.marine_risk?.sensitive_areas || [];
+
+  sensitiveAreas.forEach(
+    area => {
+
+      let borderColor = "#4fd1c5";
+
+      if (area.risk_level === "MODERATE") {
+        borderColor = "#e0a458";
+      }
+
+      if (area.risk_level === "HIGH") {
+        borderColor = "#e0645a";
+      }
+
+      const zone =
+        L.geoJSON(
+          area.geometry,
+          {
+            style: {
+              color: borderColor,
+              weight: 2,
+              fillColor: borderColor,
+              fillOpacity: 0.16,
+              dashArray: "5 4"
+            }
+          }
+        )
+        .bindPopup(
+          `<strong>${area.name}</strong><br>` +
+          `Risk: ${area.risk_level}<br>` +
+          `Nearest forecast distance: ` +
+          `${area.minimum_distance_km} km`
+        )
+        .addTo(forecastLayerGroup);
+
+      zone.eachLayer(
+        layer => {
+
+          if (layer.getBounds) {
+            bounds.push(
+              layer.getBounds()
+            );
+          }
+
+        }
+      );
+    }
+  );
+
+
+  if (bounds.length) {
+
+    let combined =
+      bounds[0];
+
+    bounds.forEach(
+      b => {
+        combined =
+          combined.extend(b);
+      }
+    );
+
+    forecastMap.fitBounds(
+      combined,
+      {
+        padding: [40, 40]
+      }
+    );
+  }
+
+  toggleForecastSpread();
+}
+
+
+function drawForecastSpread(zones) {
+
+  if (!forecastSpreadLayer) {
+    return;
+  }
+
+  forecastSpreadLayer.clearLayers();
+
+  zones.forEach(
+    zone => {
+
+      L.geoJSON(
+        zone.geometry,
+        {
+          style: {
+            color: "#4fd1c5",
+            weight: 1,
+            fillColor: "#4fd1c5",
+            fillOpacity: 0.10
+          }
+        }
+      )
+      .bindPopup(
+        `<strong>Predicted spill spread</strong><br>` +
+        `Forecast radius: ${zone.radius_km} km<br>` +
+        `${zone.time || ""}`
+      )
+      .addTo(forecastSpreadLayer);
+
+    }
+  );
+}
+
+
+function toggleForecastSpread() {
+
+  if (!forecastSpreadLayer) {
+    return;
+  }
+
+  const enabled =
+    document.getElementById(
+      "spreadToggle"
+    ).checked;
+
+  if (enabled) {
+
+    if (!forecastLayerGroup.hasLayer(
+      forecastSpreadLayer
+    )) {
+
+      forecastLayerGroup.addLayer(
+        forecastSpreadLayer
+      );
+    }
+
+  } else {
+
+    if (forecastLayerGroup.hasLayer(
+      forecastSpreadLayer
+    )) {
+
+      forecastLayerGroup.removeLayer(
+        forecastSpreadLayer
+      );
+    }
+  }
+}
+
+
+function renderForecastRisk(data) {
+
+  const risk =
+    data.marine_risk?.overall || "LOW";
+
+  const badge =
+    document.getElementById(
+      "forecastRiskBadge"
+    );
+
+  const info =
+    document.getElementById(
+      "forecastRiskInfo"
+    );
+
+  badge.className =
+    `risk-badge ${risk.toLowerCase()}`;
+
+  badge.textContent =
+    `${risk} MARINE RISK`;
+
+  const areas =
+    data.marine_risk?.sensitive_areas || [];
+
+  if (!areas.length) {
+
+    info.innerHTML = `
+      <span class="forecast-risk-safe">
+        No configured sensitive marine areas detected
+        along the forecast corridor.
+      </span>
+    `;
+
+    return;
+  }
+
+
+  const highestRisk =
+    areas.reduce(
+      (highest, area) => {
+
+        const order = {
+          LOW: 1,
+          MODERATE: 2,
+          HIGH: 3
+        };
+
+        return order[area.risk_level] >
+          order[highest.risk_level]
+          ? area
+          : highest;
+
+      },
+      areas[0]
+    );
+
+
+  let message = "";
+
+  if (risk === "HIGH") {
+
+    message = `
+      <span class="forecast-risk-alert">
+        <strong>ALERT:</strong>
+        Forecast spread is approaching a sensitive marine area.
+      </span>
+    `;
+
+  } else if (risk === "MODERATE") {
+
+    message = `
+      <span class="forecast-risk-warning">
+        <strong>WARNING:</strong>
+        Forecast trajectory is within the monitoring
+        range of a sensitive marine area.
+      </span>
+    `;
+
+  } else {
+
+    message = `
+      <span class="forecast-risk-safe">
+        Forecast remains outside the immediate
+        sensitive-area threshold.
+      </span>
+    `;
+  }
+
+
+  info.innerHTML = `
+    ${message}
+
+    <br>
+
+    Nearest area:
+    <strong>${highestRisk.name}</strong>
+
+    · Distance:
+    <strong>${highestRisk.minimum_distance_km} km</strong>
+
+    · Threshold:
+    <strong>5 km high / 15 km monitoring</strong>
+  `;
+}
 
 loadCases();
 
 </script>
+<!-- =========================================================
+     FORECAST SPREAD VIEW
+     ========================================================= -->
+
+<div id="forecastModal" class="forecast-modal">
+
+  <div class="forecast-panel">
+
+    <div class="forecast-header">
+
+      <div>
+        <div class="forecast-title">
+          FORECAST SPREAD & MARINE RISK
+        </div>
+
+        <div id="forecastSubtitle" class="forecast-subtitle">
+          Loading forecast...
+        </div>
+      </div>
+
+      <button
+        class="forecast-close"
+        onclick="closeForecastView()"
+      >
+        ×
+      </button>
+
+    </div>
+
+    <div class="forecast-toolbar">
+
+      <label class="forecast-toggle">
+        <input
+          type="checkbox"
+          id="spreadToggle"
+          checked
+          onchange="toggleForecastSpread()"
+        />
+
+        <span class="toggle-slider"></span>
+
+        <span>
+          Show predictive spread
+        </span>
+      </label>
+
+      <div id="forecastRiskBadge" class="risk-badge">
+        CALCULATING
+      </div>
+
+    </div>
+
+    <div id="forecastMap"></div>
+
+    <div class="forecast-legend">
+
+      <div>
+        <span class="legend-dot current"></span>
+        Current spill
+      </div>
+
+      <div>
+        <span class="legend-dot forecast"></span>
+        Predicted spread
+      </div>
+
+      <div>
+        <span class="legend-dot sensitive"></span>
+        Sensitive marine area
+      </div>
+
+    </div>
+
+    <div id="forecastRiskInfo" class="forecast-risk-info">
+      Loading marine-risk analysis...
+    </div>
+
+  </div>
+
+</div>
 </body>
 </html>
