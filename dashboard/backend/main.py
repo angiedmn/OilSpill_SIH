@@ -16,6 +16,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -67,7 +68,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+FRONTEND_FILE = REPO_ROOT / "dashboard" / "frontend" / "index.html"
 
+
+@app.get("/", include_in_schema=False)
+def serve_frontend():
+    return FileResponse(FRONTEND_FILE)
 
 @app.get("/api/health")
 def health():
