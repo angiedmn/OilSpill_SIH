@@ -630,84 +630,91 @@ for slick_id, m3 in m3_lookup.items():
 
             trajectory_observations.append({
 
-                "time": str(
-                    point[
-                        "base_date_time"
-                    ]
+                "time": point[
+                    "base_date_time"
+                ],
+
+                "time_from_spill_hours": (
+                    None
+                    if pd.isna(spill_time)
+                    else round(
+                        (
+                            point["base_date_time"]
+                            - spill_time
+                        ).total_seconds() / 3600,
+                        3
+                    )
                 ),
 
-                "latitude": float(
-                    point[
-                        "latitude"
-                    ]
+                "latitude": point[
+                    "latitude"
+                ],
+
+                "longitude": point[
+                    "longitude"
+                ],
+
+                "prev_time": point.get(
+                    "prev_time"
                 ),
 
-                "longitude": float(
-                    point[
-                        "longitude"
-                    ]
+                "prev_lat": point.get(
+                    "prev_lat"
                 ),
 
-                "prev_time": (
+                "prev_lon": point.get(
+                    "prev_lon"
+                ),
+
+                "movement_bearing": (
                     None
                     if pd.isna(
                         point.get(
-                            "prev_time"
+                            "movement_bearing"
                         )
                     )
-                    else str(
+                    else float(
                         point[
-                            "prev_time"
+                            "movement_bearing"
                         ]
                     )
                 ),
 
-                "prev_lat": safe_float(
-                    point.get(
-                        "prev_lat"
-                    )
-                ),
-
-                "prev_lon": safe_float(
-                    point.get(
-                        "prev_lon"
-                    )
-                ),
-
-                "movement_bearing": safe_float(
-                    point.get(
-                        "movement_bearing"
-                    )
-                ),
-
-                "segment_speed_knots": safe_float(
-                    point.get(
-                        "segment_speed_knots"
-                    )
-                ),
-
-                "distance_m": safe_float(
-                    point.get(
-                        "distance_m"
-                    )
-                ),
-
-                "origin_distance_km": safe_float(
-                    point[
-                        "origin_distance_km"
-                    ],
-                    3
-                ),
-
-                # NEW
-                "time_from_spill_hours": (
+                "segment_speed_knots": (
                     None
-                    if time_from_spill_hours
-                    is None
-                    else round(
-                        time_from_spill_hours,
-                        4
+                    if pd.isna(
+                        point.get(
+                            "segment_speed_knots"
+                        )
                     )
+                    else float(
+                        point[
+                            "segment_speed_knots"
+                        ]
+                    )
+                ),
+
+                "distance_m": (
+                    None
+                    if pd.isna(
+                        point.get(
+                            "distance_m"
+                        )
+                    )
+                    else float(
+                        point[
+                            "distance_m"
+                        ]
+                    )
+                ),
+
+                "origin_distance_km": round(
+                    float(
+                        point[
+                            "origin_distance_km"
+                        ]
+                    ),
+                    3
                 )
             })
 
@@ -1132,6 +1139,100 @@ for slick_id, m3 in m3_lookup.items():
                 "track": trajectory_observations
             },
 
+            # ----------------------------------------------
+            # Drift evidence
+            # ----------------------------------------------
+            #
+            # Normalize the M3 hindcast structure so that
+            # scoring.py does not need to know the exact
+            # M3 JSON structure.
+            #
+            # ----------------------------------------------
+
+            "drift": {
+
+                "hindcast_times": m3["hindcast"].get(
+                    "times",
+                    []
+                ),
+
+                "centroid_path": {
+
+                    "lats": m3["hindcast"]
+                    .get(
+                        "centroid_path",
+                        {}
+                    )
+                    .get(
+                        "lats",
+                        []
+                    ),
+
+                    "lons": m3["hindcast"]
+                    .get(
+                        "centroid_path",
+                        {}
+                    )
+                    .get(
+                        "lons",
+                        []
+                    )
+                },
+
+                "bounding_envelope": {
+
+                    "min_lats": m3["hindcast"]
+                    .get(
+                        "bounding_envelope",
+                        {}
+                    )
+                    .get(
+                        "min_lats",
+                        []
+                    ),
+
+                    "max_lats": m3["hindcast"]
+                    .get(
+                        "bounding_envelope",
+                        {}
+                    )
+                    .get(
+                        "max_lats",
+                        []
+                    ),
+
+                    "min_lons": m3["hindcast"]
+                    .get(
+                        "bounding_envelope",
+                        {}
+                    )
+                    .get(
+                        "min_lons",
+                        []        
+                    ),
+
+                    "max_lons": m3["hindcast"]
+                    .get(
+                        "bounding_envelope",
+                        {}
+                    )
+                    .get(
+                        "max_lons",
+                        []
+                    )
+                },
+
+                "origin": {
+
+                    "latitude": float(
+                        origin_lat
+                    ),
+
+                    "longitude": float(
+                        origin_lon
+                    )
+                }
+            },
 
             # ----------------------------------------------
             # Vessel behavior
