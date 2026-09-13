@@ -1,3 +1,8 @@
+AIS/data/raw/*
+AIS/data/processed/*.csv
+AIS/data/processed/ais_sample.csv
+AIS/data/processed/
+
 __pycache__/
 *.pyc
 venv/
@@ -10,7 +15,3 @@ Thumbs.db
 .env
 .env.local
 outputs/geospatial/*.png
-outputs/geospatial/from_local.json
-*.tif
-AIS/data/raw/*
-AIS/data/processed/*.csv
