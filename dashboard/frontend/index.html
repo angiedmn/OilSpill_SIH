@@ -551,6 +551,65 @@ select#caseSelect {
 .forecast-risk-safe {
   color: var(--cyan);
 }
+
+/* =========================================================
+   MAP LEGEND (main investigation / risk map)
+   ========================================================= */
+
+.map-legend {
+  position: absolute;
+  left: 12px;
+  bottom: 24px;
+  z-index: 1000;
+
+  background: rgba(16, 28, 44, 0.92);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text-dim);
+
+  min-width: 175px;
+  pointer-events: none;
+}
+
+.map-legend .legend-title {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  opacity: 0.8;
+}
+
+.map-legend .legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2.5px 0;
+  color: var(--text);
+}
+
+.map-legend .swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: none;
+  display: inline-block;
+}
+
+.map-legend .swatch.line {
+  width: 14px;
+  height: 0;
+  border-radius: 0;
+  border-top: 2px solid;
+}
+
+.map-legend .swatch.dashed {
+  border-top-style: dashed;
+}
 </style>
 </head>
 
@@ -581,7 +640,9 @@ select#caseSelect {
   </header>
   <!-- END dashboard mode switch -->
 
-  <div id="map"></div>
+  <div id="map" style="position:relative;">
+    <div id="mapLegend" class="map-legend"></div>
+  </div>
   <div id="side"></div>
 
 </div>
@@ -616,6 +677,65 @@ const colors = {
   vessel:"#dbe6f0",
   active:"#e0a458"
 };
+
+
+/* NEW: map legend (matches investigation vs risk mode) */
+
+function renderLegend() {
+
+  const el = document.getElementById("mapLegend");
+  if (!el) return;
+
+  if (dashboardMode === "risk") {
+
+    el.innerHTML = `
+      <div class="legend-title">Legend</div>
+      <div class="legend-row">
+        <span class="swatch" style="background:${colors.spill}"></span>
+        High risk zone
+      </div>
+      <div class="legend-row">
+        <span class="swatch" style="background:${colors.active}"></span>
+        Medium-high risk zone
+      </div>
+      <div class="legend-row">
+        <span class="swatch" style="background:${colors.origin}"></span>
+        Medium risk zone / spill origin
+      </div>
+    `;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="legend-title">Legend</div>
+    <div class="legend-row">
+      <span class="swatch" style="background:${colors.spill}; opacity:.6"></span>
+      Detected spill area
+    </div>
+    <div class="legend-row">
+      <span class="swatch" style="background:${colors.origin}"></span>
+      Estimated origin
+    </div>
+    <div class="legend-row">
+      <span class="swatch line dashed" style="border-color:${colors.drift}"></span>
+      Hindcast drift path
+    </div>
+    <div class="legend-row">
+      <span class="swatch line" style="border-color:${colors.drift}"></span>
+      Forecast drift path
+    </div>
+    <div class="legend-row">
+      <span class="swatch" style="background:${colors.vessel}; opacity:.5"></span>
+      Candidate vessel track
+    </div>
+    <div class="legend-row">
+      <span class="swatch" style="background:${colors.active}"></span>
+      Selected vessel track
+    </div>
+  `;
+}
+
+/* END map legend */
 
 
 /* NEW: frontend-only risk zones using current case data */
@@ -710,6 +830,7 @@ async function loadCase(slickId) {
 function renderMap() {
 
   layerGroup.clearLayers();
+  renderLegend();
 
   if (dashboardMode === "risk") {
     renderRiskMap();
