@@ -1,122 +1,245 @@
 # OilTrace — Explainable Maritime Pollution Forensics
 
-An end-to-end forensic pipeline that detects oil spills from satellite imagery, reconstructs their probable origin using ocean drift modelling, and ranks vessels based on evidence from AIS data.
+OilTrace is an end-to-end maritime pollution investigation prototype that combines **Satellite SAR imagery, Geospatial Analysis, Ocean Drift Modelling, AIS vessel intelligence, and Explainable Evidence Scoring** to investigate the probable origin of oil spills.
 
-Built for **Smart India Hackathon 2026**, OilTrace is a working prototype demonstrating the complete investigative pipeline on a controlled real-data scenario. It is not a production system or a legal attribution tool.
+Built for **Smart India Hackathon 2026**, OilTrace demonstrates how multiple evidence sources can be connected into a unified forensic workflow.
+
+> **AI + Physics + AIS — one forensic pipeline.**
+
+---
+<p align="center">
+
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)
+![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white)
+![OpenDrift](https://img.shields.io/badge/OpenDrift-1565C0?style=for-the-badge)
+![OpenOil](https://img.shields.io/badge/OpenOil-1976D2?style=for-the-badge)
+![CMEMS](https://img.shields.io/badge/CMEMS-005BBB?style=for-the-badge)
+![AIS](https://img.shields.io/badge/AIS-Maritime%20Data-263238?style=for-the-badge)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Leaflet](https://img.shields.io/badge/Leaflet-199900?style=for-the-badge&logo=leaflet&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
+
+</p>
+
+## 🔎 Project Overview
+
+Illegal oil discharges at sea are difficult to investigate because an observed slick may have drifted significantly from its original release location. AIS data can also contain gaps, irregularities, or incomplete vessel information.
+
+OilTrace addresses this by connecting:
+
+**Satellite Detection → Spill Characterisation → Drift Reconstruction → AIS Correlation → Evidence Scoring → Investigation Dashboard**
+
+The system produces **ranked investigation candidates with explainable evidence**, rather than making an automated accusation.
 
 ---
 
-## The Problem
+# 🏗️ Three-Layer Architecture
 
-Illegal oil discharges at sea are difficult to investigate because:
+OilTrace is organised into three major architectural layers.
 
-* Oil spills drift with currents and wind, so the visible location may differ from the original discharge location.
-* AIS data can contain gaps, coverage limitations, and other inconsistencies.
-* Detection alone does not answer the critical investigative question: **which vessel may be responsible?**
+### Layer 1 — Detection & Characterisation
 
-OilTrace addresses this gap by connecting satellite-based detection with drift reconstruction and vessel intelligence to produce a ranked, evidence-backed list of investigation candidates.
+Identifies and measures the detected oil slick.
+
+- Sentinel-1 / SAR imagery
+- U-Net + ResNet-18 segmentation
+- Binary oil-spill masks
+- GeoJSON generation
+- Centroid and bounding box
+- Area, perimeter, length, width and orientation
+
+**Output:** Structured spill geometry and metadata.
 
 ---
 
-## How It Works
+### Layer 2 — Reconstruction & Intelligence
+
+Reconstructs the possible movement and identifies vessels associated with the probable origin.
+
+- Ocean current and wind data
+- OpenDrift / OpenOil simulation
+- Forward and backward drift modelling
+- Probable origin estimation
+- AIS spatial and temporal correlation
+- Vessel trajectory reconstruction
+- AIS gap and movement analysis
+
+**Output:** Probable origin zones and vessel evidence.
+
+---
+
+### Layer 3 — Attribution & Investigation
+
+Combines evidence into an interpretable investigation result.
+
+- Spatial evidence
+- Temporal evidence
+- Trajectory evidence
+- Drift consistency
+- AIS quality
+- Weighted evidence scoring
+- Ranked vessel candidates
+- Interactive investigation dashboard
+
+**Output:** Explainable candidate ranking for investigators.
+
+---
+
+# 🔄 End-to-End Pipeline
 
 ```text
-Satellite Imagery
-       ↓
-Oil Spill Detection
-       ↓
-Spill Characterisation
-       ↓
-Drift Simulation
-   ↙           ↘
-Backtracking   Forecast
-   ↓
-Probable Origin Zone
-       ↓
-AIS Correlation
-       ↓
-Evidence Scoring
-       ↓
-Ranked Vessel Candidates
-       ↓
-Investigation Dashboard
+┌─────────────────────┐
+│   SAR Satellite     │
+│      Imagery        │
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│ M1: Spill Detection │
+│   U-Net + ResNet18  │
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│ M2: Geospatial      │
+│ Characterisation    │
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│ M3: Ocean Drift     │
+│ Hindcast / Forecast │
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│ M4: AIS Intelligence│
+│ Vessel Correlation  │
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│ M5: Evidence Scoring│
+│ & Attribution       │
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│ M6: Investigation   │
+│     Dashboard       │
+└─────────────────────┘
 ```
 
-The system does not produce a definitive verdict. It generates an **explainable investigation lead**, with the evidence contributing to each vessel's ranking.
+# 📁 Project Structure
+```
+OilTrace/
+│
+├── modules/
+│   ├── detection/
+│   │   ├── pipeline.py
+│   │   └── ...
+│   │
+│   ├── geospatial/
+│   │   ├── spill_characterisation.py
+│   │   ├── process_real_detections.py
+│   │   └── ...
+│   │
+│   ├── drift/
+│   │   ├── pipeline.py
+│   │   ├── metocean.py
+│   │   └── ...
+│   │
+│   ├── AIS/
+│   │   ├── src/
+│   │   │   ├── cleaning.py
+│   │   │   ├── spatial_filter.py
+│   │   │   ├── trajectory.py
+│   │   │   ├── gap_analysis.py
+│   │   │   ├── features.py
+│   │   │   └── evidence.py
+│   │   └── run_m4_pipeline.py
+│   │
+│   └── attribution/
+│       ├── scoring.py
+│       ├── evidence.py
+│       └── loaders.py
+│
+├── dashboard/
+│   ├── backend/
+│   │   └── main.py
+│   │
+│   └── frontend/
+│       └── index.html
+│
+├── outputs/
+│   ├── spill/
+│   ├── geospatial/
+│   ├── drift/
+│   ├── AIS/
+│   └── scoring/
+│
+├── run_m3_pipeline.py
+├── requirements.txt
+└── README.md
+```
+# 🖥️ Investigation Dashboard
 
----
+OilTrace brings the detection, geospatial analysis, drift reconstruction,
+AIS correlation, and evidence scoring stages into a unified investigation
+interface.
 
-## Current Progress
+Incident Investigation
 
-### Detection
+Interactive dashboard for exploring individual slicks, their area, origin and detection confidence, while viewing ranked vessel candidates and corresponding evidence scores.
 
-* U-Net with a ResNet-18 backbone
-* Deep-SAR Oil Spill Segmentation (refined) dataset
-* Validation: **Dice 0.76, IoU 0.65**
-* Binary segmentation masks with GeoJSON and JSON metadata outputs
-* Confidence-based filtering and area thresholding to reduce false positives
+<img width="1100" height="600" alt="OilTrace Incident Investigation Dashboard" src="https://github.com/user-attachments/assets/75fdcadb-d036-4666-9af5-c5f2dd161514" />
+Evidence Breakdown
 
-### Geospatial Characterisation
+Presents the evidence contributing to the ranking of potential vessel candidates, enabling investigators to understand why a candidate is flagged.
 
-* Converts detected slicks into real-world geometry
-* Calculates centroid, area, perimeter, length, width, and orientation
-* Validated against raw detection masks
-* Outputs standardised GeoJSON and JSON for downstream modules
+<img width="1100" height="600" alt="OilTrace Evidence Breakdown" src="https://github.com/user-attachments/assets/5dba5a86-352b-4d38-91f8-fbfc2d0764d0" />
+High-Risk Probability Zones
 
-### Drift, AIS, Attribution & Dashboard
+Visualises areas associated with higher estimated probability of spill origin, supporting prioritisation during investigation.
 
-Currently in development.
+<img width="1100" height="600" alt="OilTrace High Risk Probability Zones" src="https://github.com/user-attachments/assets/09c442f3-1724-42ba-a953-6486838cb4d7" />
+Predicted Spill Spread
 
----
+Displays the predicted evolution and spatial spread of the slick based on the drift modelling stage.
 
-## Demo Scenario
+<img width="1100" height="600" alt="OilTrace Predicted Spill Spread" src="https://github.com/user-attachments/assets/3136a0e9-a23a-4fc7-883f-e9fe7cdb012e" />
+Sensitive Zone Detection
 
-**Region:** Arabian Sea corridor off Mumbai
-**Coordinates:** 72.50°E, 18.80°N
-**SAR scenes processed:** 1,615
-**Detected slicks:** 1,548
-**Clean-water controls:** 67
+Highlights sensitive coastal or maritime zones located near the predicted spill trajectory, supporting environmental risk assessment.
 
-The controlled scenario is used to demonstrate the complete investigative workflow and module integration.
+<img width="1100" height="600" alt="OilTrace Sensitive Zone Detection" src="https://github.com/user-attachments/assets/43aa4a19-8dbb-40cd-88ea-29c5e600d94d" />
 
----
+# ⭐ Key Differentiators
 
-## Tech Stack
+1. End-to-End Forensic Workflow
+Connects satellite detection, drift reconstruction, AIS intelligence and evidence scoring in one pipeline.
 
-| Layer               | Technologies                        |
-| ------------------- | ----------------------------------- |
-| Detection           | PyTorch, U-Net, OpenCV              |
-| Geospatial          | Shapely, GeoPandas, Rasterio, GeoPy |
-| Coordinates         | WGS84 / EPSG:4326                   |
-| Time                | UTC ISO-8601                        |
-| Data Exchange       | GeoJSON, JSON                       |
-| Vessel Intelligence | AIS data                            |
+2. Bidirectional Drift Analysis
+Uses both hindcast to investigate probable origin and forecast to estimate future slick movement.
 
----
+3. Explainable Evidence
+Candidates are ranked using interpretable evidence components instead of a black-box accusation.
 
-## Team Structure
+4. Investigation-First Design
+The system is designed around the investigator's workflow — from detecting a slick to understanding which vessels require further investigation.
 
-| Member | Module                         |
-| ------ | ------------------------------ |
-| M1     | Oil Spill Detection            |
-| M2     | Geospatial Characterisation    |
-| M3     | Ocean Drift Modelling          |
-| M4     | AIS / Vessel Intelligence      |
-| M5     | Evidence Scoring & Attribution |
-| M6     | Investigation Dashboard        |
+5. Modular Architecture
+Each stage produces structured outputs that can be independently improved or replaced.
 
----
 
-## Why It Matters
+# 🚀 Future Scope
 
-Operational systems such as EMSA's CleanSeaNet demonstrate that satellite, oceanographic, and AIS data can support real-world maritime pollution investigations.
+Near-real-time satellite and AIS ingestion
+Improved spill release-time / age estimation
+Advanced behavioural anomaly detection
+Multi-sensor SAR + optical fusion
+Probabilistic vessel attribution
+Expanded coastal and ecological risk assessment
+Automated investigation reports
+Large-scale maritime monitoring
 
-OilTrace focuses on building a **transparent, explainable, and modular prototype** that connects these stages into a single investigative workflow using publicly accessible data.
 
-The current prototype establishes the core architecture. Future development will focus on improving detection accuracy, expanding data coverage, strengthening drift and attribution models, and increasing system robustness.
-
----
-
-## Disclaimer
-
-OilTrace is a research and demonstration prototype. Vessel rankings represent **investigation candidates based on available evidence** and should not be interpreted as proof of responsibility or used as an automated legal or enforcement decision.
+#👨‍💻 Built for Smart India Hackathon 2026
+OilTrace — Explainable Maritime Pollution Forensics
+From detection to investigation — connecting AI, physics and maritime intelligence.
